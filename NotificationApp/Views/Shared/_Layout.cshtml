@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - NotificationApp</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/NotificationApp.styles.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">NotificationApp</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Notificações</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Chat">Chat</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div aria-live="polite" aria-atomic="true" class="position-relative">
+        <div id="notificationContainer" class="toast-container position-fixed top-0 end-0 p-3">
+            <!-- Notificações aparecerão aqui -->
+        </div>
+    </div>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+<script type="text/javascript">
+    function sendMessage(connection, message, type) {
+        connection.invoke("SendMessage", message, type).catch(function (err) {
+            return console.error(err.toString());
+        });
+    }
+
+    function showNotification(message, type) {
+        const notificationContainer = document.getElementById("notificationContainer");
+
+        const notificationDiv = document.createElement("div");
+        notificationDiv.className = `toast align-items-center text-bg-${type} border-0`;
+        notificationDiv.role = "alert";
+        notificationDiv.ariaLive = "assertive";
+        notificationDiv.ariaAtomic = "true";
+        notificationDiv.innerHTML = `<div class="toast-header">
+                                         <img src="https://logodownload.org/wp-content/uploads/2015/04/whatsapp-logo-1-1.png" class="rounded me-2" width="7%" height="7%">
+                                         <strong class="me-auto">Whatsapp</strong>
+                                         <small class="text-body-secondary">11 mins ago</small>
+                                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                                     </div>
+                                     <div class="toast-body">
+                                         ${message}
+                                     </div>`;
+
+        notificationContainer.appendChild(notificationDiv);
+
+        const notification = new bootstrap.Toast(notificationDiv);
+        notification.show();
+
+        // Remover automaticamente após a exibição
+        notificationDiv.addEventListener('hidden.bs.toast', () => {
+            notificationDiv.remove();
+        });
+    }
+</script>
+</html>

@@ -1,0 +1,165 @@
+﻿<style>
+    .chat-container {
+        width: 360px;
+        max-width: 100%;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+    }
+
+    .header {
+        background-color: #075e54;
+        color: #fff;
+        padding: 15px;
+        font-size: 18px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .message-list {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .message {
+        max-width: 70%;
+        padding: 10px;
+        border-radius: 20px;
+        display: inline-block;
+        position: relative;
+    }
+
+        .message.user {
+            background-color: #dcf8c6;
+            margin-left: auto;
+        }
+
+        .message.bot {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-right: auto;
+        }
+
+    .input-container {
+        display: flex;
+        border-top: 1px solid #ddd;
+        background-color: #fff;
+    }
+
+        .input-container input {
+            flex: 1;
+            border: none;
+            padding: 10px;
+            border-radius: 0 0 0 8px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .input-container button {
+            border: none;
+            padding: 10px;
+            background-color: #075e54;
+            color: #fff;
+            border-radius: 0 0 8px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            .input-container button:hover {
+                background-color: #034d41;
+            }
+</style>
+
+@{
+    ViewData["Title"] = "Chat em Tempo Real com Diferenciação de Usuários";
+}
+<h1>@ViewData["Title"]</h1>
+<p>O chat permitirá que dois usuários troquem mensagens em uma interface web, com a particularidade de que as mensagens de cada usuário serão diferenciadas visualmente, aparecendo em lados opostos da interface..</p>
+
+<div class="input-container" id="form_id_user">
+    <input type="text" id="id_user" placeholder="Digite seu nome." />
+    <button id="sendIdUser">Enviar</button>
+</div>
+<br>
+<div class="chat-container" style="width: 400px; margin: auto; background-color: #f0f0f0; padding: 20px;" id="chat">
+    <div class="header">Chat com Usuário</div>
+    <div class="message-list" id="messages">
+    </div>
+    <div class="input-container">
+        <input type="text" id="message" placeholder="Digite sua mensagem..." />
+        <button id="sendMessage">Enviar</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.11/signalr.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            var userId = "";
+            disableDiv("chat");
+
+            function enableDiv(divName) {
+                var div = document.getElementById(divName);
+                div.style.pointerEvents = 'auto';
+                div.style.opacity = '1';
+                div.style.backgroundColor = '';
+            }
+            function disableDiv(divName) {
+                var div = document.getElementById(divName);
+                div.style.pointerEvents = 'none';
+                div.style.opacity = '0.5';
+                div.style.backgroundColor = '#f0f0f0';
+            }
+
+            document.getElementById("sendIdUser").addEventListener("click", function () {
+                const idUser = document.getElementById("id_user").value;
+
+                console.log(idUser);
+                if (idUser === null || idUser === undefined || idUser.trim() === "") {
+                    showNotification("Digite seu Nome.", "danger");
+                }
+                else {
+                    userId = idUser;
+                    enableDiv("chat");
+                    disableDiv("form_id_user");
+                }
+            });
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/chatHub")
+                .build();
+
+            connection.on("ReceiveMessage", function (senderId, message) {
+                const divMessage = document.createElement("div");
+                divMessage.textContent = message;
+
+                if (senderId === userId) {
+                    divMessage.className = "message user";
+                } else {
+                    divMessage.className = "message bot";
+                }
+
+                document.getElementById("messages").appendChild(divMessage);
+            });
+
+            connection.start().then(function () {
+                document.getElementById("sendMessage").addEventListener("click", function () {
+                    const message = document.getElementById("message").value;
+                    connection.invoke("SendMessage", userId, message).catch(function (err) {
+                        return console.error(err.toString());
+                    });
+                    document.getElementById("message").value = '';
+                });
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+        });
+    </script>
+}
